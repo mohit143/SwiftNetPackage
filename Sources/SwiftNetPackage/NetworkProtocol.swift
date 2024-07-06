@@ -11,5 +11,6 @@ public typealias completionHandler = (Result<Data, NetworkError>) -> Void
 
 public protocol NetworkProtocol {
     static var shared: NetworkProtocol { get }
+    @available(iOS 13.0.0, *)
     func call(method: HTTPMethod, url: String, parameter: [String : Any]?, completion: completionHandler) async throws
 }

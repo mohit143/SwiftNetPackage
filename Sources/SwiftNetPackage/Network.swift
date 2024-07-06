@@ -11,17 +11,29 @@ public class Network: NetworkProtocol {
     public static var shared: NetworkProtocol = Network()
     let validStatus = 200...299
     
+    @available(iOS 13.0.0, *)
     public func call(method: HTTPMethod, url: String, parameter: [String : Any]?, completion: completionHandler) async throws {
         let urlRequest = self.prepareRequest(method, url: url, parameter: parameter)
         
         if urlRequest != nil {
-            guard let (data, response) = try await URLSession.shared.data(for: urlRequest!, delegate: nil) as? (Data, HTTPURLResponse), validStatus.contains(response.statusCode) else {
+            let urlResponse : (data: Data, response: HTTPURLResponse)?
+            
+            if #available(iOS 15.0, *) {
+                urlResponse = try await URLSession.shared.data(for: urlRequest!, delegate: nil) as? (data: Data, response: HTTPURLResponse)
+                
+            } else {
+                // Fallback on earlier versions
+                urlResponse = try await URLSession.shared.data(for: urlRequest!) as? (data: Data, response: HTTPURLResponse)
+            }
+            
+            guard let urlResponse = urlResponse, validStatus.contains(urlResponse.response.statusCode) else {
                 completion(.failure(.empty()))
                 
                 throw NetworkError.empty()
             }
             
-            completion(.success(data))
+            completion(.success(urlResponse.data))
+
         }
     }
 
